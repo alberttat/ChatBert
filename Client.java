@@ -4,41 +4,97 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Client {
-	public static Socket socket;
-	public static String username;
+	private String HOMEIP = "127.0.0.1";
+	private int PORT = 8443;
+	private Socket socket;
+	private String username;
+	private BufferedReader clientInputStream;
+	private BufferedReader receiverStream;
+	private PrintWriter senderStream;
+
+	public Client() throws IOException {
+		setSocket(new Socket(HOMEIP, PORT));
+		clientInputStream = (new BufferedReader(new InputStreamReader(System.in)));
+		receiverStream = (new BufferedReader(new InputStreamReader(getSocket().getInputStream())));
+		senderStream = (new PrintWriter(getSocket().getOutputStream(), true));
+	}
+
+	public Client(String username) throws IOException {
+
+		this.username = username;
+		setSocket(new Socket(HOMEIP, PORT));
+		clientInputStream = (new BufferedReader(new InputStreamReader(System.in)));
+		receiverStream = (new BufferedReader(new InputStreamReader(getSocket().getInputStream())));
+		senderStream = (new PrintWriter(getSocket().getOutputStream(), true));
+	}
+
+	public Client(Socket clientSocket) throws IOException {
+
+		setSocket(clientSocket);
+		clientInputStream = (new BufferedReader(new InputStreamReader(System.in)));
+		receiverStream = (new BufferedReader(new InputStreamReader(getSocket().getInputStream())));
+		senderStream = (new PrintWriter(getSocket().getOutputStream(), true));
+	}
+
+	public Socket getSocket() {
+		return socket;
+	}
+
+	public void setSocket(Socket socket) {
+		this.socket = socket;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getUsername() {
+		return this.username;
+	}
+
+	public BufferedReader getClientInputStream() {
+		return clientInputStream;
+	}
+
+	public BufferedReader getReceiverStream() {
+		return receiverStream;
+	}
+
+	public PrintWriter getSenderStream() {
+		return senderStream;
+	}
+
+	public String close() throws IOException {
+		getSocket().close();
+		return getSocket().toString() + " - closed";
+	}
 
 	public static void main(String[] args) throws IOException {
+
+		Client client = new Client();
+
 		System.out.println("Coming from Client");
-		try {
-			System.out.println("Attempting Socket Connection");
+		System.out.println("Attempting Socket Connection");
+		ClientReceive receive = new ClientReceive(client);
+		receive.start();
 
-			socket = new Socket("127.0.0.1", 8443);
-			// input reader from Server socket
-			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		while (true) {
 
-			// output writer to server socket
-			PrintWriter writer = new PrintWriter(socket.getOutputStream());
-			Scanner input = new Scanner(System.in);
-			System.out.print("Enter Username:");
-			username = input.nextLine();
+			System.out.println(">");
 
-			// writes to output buffer
-			writer.write(username);
-			// sends data over socket, removes from buffer
-			writer.flush();
+			// read input from client and send over socket
+			String inputString = client.getClientInputStream().readLine();
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			socket.close();
+			if (inputString.equals("quit"))
+				break;
+			client.getSenderStream().println(inputString);
 
-			System.out.println("Connection Closed");
 		}
+		client.close();
+		System.out.println("Connection Closed");
 
-		System.out.println("Username is: " + username);
 	}
+
 }
