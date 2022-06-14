@@ -6,21 +6,22 @@ public class ClientReceive extends Thread {
 
 	public ClientReceive(Client client) throws IOException {
 		this.client = client;
-		// receiver = new BufferedReader(new
-		// InputStreamReader(client.socket.getInputStream()));
+
 	}
 
 	@Override
 	public void run() {
 
-		try {
-			while (true) {
-				// read messages from server socket
+		while (client != null) {
+			// read messages from server socket
+
+			try {
 				System.out.println(client.getReceiverStream().readLine());
+			} catch (IOException e) {
+				client = null;
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
+
 	}
 }

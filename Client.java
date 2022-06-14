@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class Client {
-	private String HOMEIP = "127.0.0.1";
-	private int PORT = 8443;
+	private static String HOMEIP = "127.0.0.1";
+	private static int PORT = 8443;
 	private Socket socket;
 	private String username;
 	private BufferedReader clientInputStream;
@@ -22,7 +23,6 @@ public class Client {
 	}
 
 	public Client(String username) throws IOException {
-
 		this.username = username;
 		setSocket(new Socket(HOMEIP, PORT));
 		clientInputStream = (new BufferedReader(new InputStreamReader(System.in)));
@@ -31,7 +31,6 @@ public class Client {
 	}
 
 	public Client(Socket clientSocket) throws IOException {
-
 		setSocket(clientSocket);
 		clientInputStream = (new BufferedReader(new InputStreamReader(System.in)));
 		receiverStream = (new BufferedReader(new InputStreamReader(getSocket().getInputStream())));
@@ -46,8 +45,14 @@ public class Client {
 		this.socket = socket;
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
+	public boolean setUsername(String username) {
+		String regex = "^[a-zA-Z]+$";
+		if (username.matches(regex)) {
+			this.username = username;
+			return true;
+		}
+		return false;
+
 	}
 
 	public String getUsername() {
@@ -66,35 +71,41 @@ public class Client {
 		return senderStream;
 	}
 
-	public String close() throws IOException {
+	public void close() throws IOException {
 		getSocket().close();
-		return getSocket().toString() + " - closed";
+		getClientInputStream().close();
+		getReceiverStream().close();
+
+		System.out.println(getSocket().toString() + " - closed");
 	}
 
 	public static void main(String[] args) throws IOException {
 
 		Client client = new Client();
 
-		System.out.println("Coming from Client");
 		System.out.println("Attempting Socket Connection");
 		ClientReceive receive = new ClientReceive(client);
 		receive.start();
 
-		while (true) {
+		while (client != null) {
+			try {
 
-			System.out.println(">");
-
-			// read input from client and send over socket
-			String inputString = client.getClientInputStream().readLine();
-
-			if (inputString.equals("quit"))
-				break;
-			client.getSenderStream().println(inputString);
-
+				// read input from client and send over socket
+				String inputString = client.getClientInputStream().readLine();
+				System.out.println(">");
+				if (inputString.equals("!quit")) {
+					client.close();
+					Server.numClients--;
+					System.out.println(Server.numClients);
+					break;
+				} else {
+					client.getSenderStream().println(inputString);
+				}
+			} catch (SocketException exception) {
+				System.out.println("Connection closed on client side");
+				client.close();
+			}
 		}
-		client.close();
-		System.out.println("Connection Closed");
-
 	}
 
 }
