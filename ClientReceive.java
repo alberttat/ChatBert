@@ -16,7 +16,9 @@ public class ClientReceive extends Thread {
 			// read messages from server socket
 
 			try {
+				System.out.print(">");
 				System.out.println(client.getReceiverStream().readLine());
+
 			} catch (IOException e) {
 				client = null;
 			}

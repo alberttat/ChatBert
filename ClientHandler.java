@@ -6,10 +6,8 @@ public class ClientHandler extends Thread {
 	static ArrayList<Client> clientList = new ArrayList<Client>();
 
 	public ClientHandler(Client serverClient) throws IOException {
-
 		currentClient = serverClient;
 		clientList.add(currentClient);
-		System.out.println(clientList.toArray());
 		System.out.println("size of array is: " + clientList.size());
 	}
 
@@ -30,8 +28,9 @@ public class ClientHandler extends Thread {
 	@Override
 	public void run() {
 		String input = "";
-		while (currentClient != null) {
-			boolean invalidUsername = true;
+		boolean invalidUsername = true;
+		boolean currentClientIsActive = true;
+		while (currentClientIsActive && currentClient != null) {
 
 			try {
 				if (currentClient.getUsername() == null) {
@@ -50,7 +49,13 @@ public class ClientHandler extends Thread {
 
 				// read input from client
 				input = currentClient.getReceiverStream().readLine();
-				if (input.contains("!users")) {
+				if (input.contains("!quit")) {
+					currentClient.close();
+					currentClientIsActive = false;
+					Server.numClients--;
+					clientList.remove(currentClient);
+					System.out.println(getUsers());
+				} else if (input.contains("!users")) {
 					currentClient.getSenderStream().println(getUsers());
 				} else if (input.contains("!help")) {
 					currentClient.getSenderStream().println("Helpful commands" + "\n" + "!quit to disconnect" + "\n"
@@ -60,15 +65,12 @@ public class ClientHandler extends Thread {
 					input = currentClient.getReceiverStream().readLine();
 					APIHandler.weather(input);
 					currentClient.getSenderStream().println(APIHandler.parseWeatherResponse(APIHandler.response));
-
 				} else if (input.contains("!youtube")) {
 					currentClient.getSenderStream().println("Please enter your youtube search");
 					input = currentClient.getReceiverStream().readLine();
 					APIHandler.youtube(input);
 					currentClient.getSenderStream().println(APIHandler.parseYoutubeResponse(APIHandler.response));
-
 				} else if (input.contains("!spotify")) {
-
 					currentClient.getSenderStream().println("Please enter your spotify track search");
 					input = currentClient.getReceiverStream().readLine();
 					APIHandler.spotify(input);
@@ -79,13 +81,7 @@ public class ClientHandler extends Thread {
 			} catch (InterruptedException | IOException e) {
 				System.out.println(currentClient.getUsername() + " has disconnected server side");
 				currentClient = null;
-				Server.numClients--;
-				System.out.println(Server.numClients);
 			}
-
-			// currentClient.sender.println("Server:" + new Date().toString() + ":" +
-			// input);
-
 		}
 
 	}

@@ -28,16 +28,14 @@ public class APIHandler {
 						"Basic " + idSecretEncoded, "Content-Type", "application/x-www-form-urlencoded")
 				.build();
 		response = Server.client.send(request, HttpResponse.BodyHandlers.ofString());
-		// System.out.println(response.body());
 		JSONObject accessToken = new JSONObject(response.body());
 		String access_Token = accessToken.getString("access_token");
-		// System.out.println(access_Token);
 		return access_Token;
 
 	}
 
 	static void spotify(String spotifySearchString) throws IOException, InterruptedException {
-		System.out.println("this is the raw spotify search string:" + spotifySearchString);
+
 		String encodedString = encode(spotifySearchString);
 		String spotifyAPI = "https://api.spotify.com/v1/search?q=" + encodedString + "&type=track,artist&limit=1";
 		String access_Token = spotifyRequestToken();
@@ -52,7 +50,6 @@ public class APIHandler {
 
 	static String parseSpotifyResponse(HttpResponse<String> response) {
 		JSONObject spotifyResponseObj = new JSONObject(response.body());
-		System.out.println(spotifyResponseObj);
 		String track;
 		JSONArray musicItems = spotifyResponseObj.getJSONObject("tracks").getJSONArray("items");
 		if (musicItems != null && musicItems.length() > 0) {
@@ -72,9 +69,6 @@ public class APIHandler {
 				+ youtubeAPI + "&q=" + encodedString + "&type=video&order=viewCount&maxResults=1")).GET().build();
 
 		response = Server.client.send(request, HttpResponse.BodyHandlers.ofString());
-		System.out.println(response.body());
-		System.out.println(response.statusCode());
-
 	}
 
 	static String parseYoutubeResponse(HttpResponse<String> response) {
@@ -121,14 +115,13 @@ public class APIHandler {
 				+ "°F and low of " + weatherMin + "°F";
 	}
 
-//URL friendly strings
+	// URL friendly strings
 	private static String encode(String stringToEncode) {
 
 		String encodedString = "";
 		try {
 			encodedString = URLEncoder.encode(stringToEncode, StandardCharsets.UTF_8.name());
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return encodedString;

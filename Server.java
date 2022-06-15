@@ -25,7 +25,6 @@ public class Server {
 		Server server = new Server();
 
 		try {
-
 			while (true) {
 				Client serverClient = new Client(server.serverSocket.accept());
 				numClients++;

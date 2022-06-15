@@ -87,23 +87,25 @@ public class Client {
 		ClientReceive receive = new ClientReceive(client);
 		receive.start();
 
-		while (client != null) {
+		while (true) {
 			try {
 
 				// read input from client and send over socket
 				String inputString = client.getClientInputStream().readLine();
-				System.out.println(">");
-				if (inputString.equals("!quit")) {
+
+				if (inputString.contains("!quit")) {
+					client.getSenderStream().println("!quit");
 					client.close();
-					Server.numClients--;
-					System.out.println(Server.numClients);
 					break;
 				} else {
 					client.getSenderStream().println(inputString);
 				}
+
 			} catch (SocketException exception) {
+				exception.printStackTrace();
 				System.out.println("Connection closed on client side");
 				client.close();
+
 			}
 		}
 	}
